@@ -30,6 +30,7 @@ const mockArticles = [
 ];
 
 beforeEach(() => {
+  process.env.DATABASE_URL = "postgresql://test:test@localhost:5432/test";
   mockFindMany.mockResolvedValue(mockArticles);
   mockFindUnique.mockImplementation(({ where }: { where: { id: string } }) => {
     const found = mockArticles.find((a) => a.id === where.id);
