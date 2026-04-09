@@ -1,0 +1,6 @@
+fly_api_token       = "your-fly-api-token"
+fly_org             = "personal"
+region              = "waw"
+staging_app_name    = "pdp-news-staging"
+production_app_name = "pdp-news-prod"
+docker_image        = "ghcr.io/dream2140/pdp:main"
