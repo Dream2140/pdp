@@ -1,0 +1,97 @@
+name: Monitoring
+
+on:
+  schedule:
+    - cron: "*/5 * * * *"
+  workflow_dispatch:
+
+jobs:
+  e2e-monitoring:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Test healthcheck
+        id: healthcheck
+        run: |
+          RESPONSE=$(curl -s -o /dev/null -w "%{http_code}" --max-time 10 https://pdp-news-prod.fly.dev/api/healthcheck)
+          if [ "$RESPONSE" = "200" ]; then
+            echo "result=pass" >> $GITHUB_OUTPUT
+          else
+            echo "result=fail ($RESPONSE)" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Test homepage loads
+        id: homepage
+        run: |
+          BODY=$(curl -s --max-time 10 https://pdp-news-prod.fly.dev/)
+          CODE=$(curl -s -o /dev/null -w "%{http_code}" --max-time 10 https://pdp-news-prod.fly.dev/)
+          if [ "$CODE" = "200" ] && echo "$BODY" | grep -q "Latest News"; then
+            echo "result=pass" >> $GITHUB_OUTPUT
+          else
+            echo "result=fail (status=$CODE)" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Test news from database
+        id: db_news
+        run: |
+          BODY=$(curl -s --max-time 10 https://pdp-news-prod.fly.dev/)
+          COUNT=$(echo "$BODY" | grep -c 'href="/news/' || true)
+          if [ "$COUNT" -ge "1" ]; then
+            echo "result=pass ($COUNT articles)" >> $GITHUB_OUTPUT
+          else
+            echo "result=fail (0 articles)" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Test news article page
+        id: article
+        run: |
+          ARTICLE_URL=$(curl -s --max-time 10 https://pdp-news-prod.fly.dev/ | grep -o 'href="/news/[^"]*"' | head -1 | tr -d '"' | sed 's/href=//')
+          if [ -n "$ARTICLE_URL" ]; then
+            CODE=$(curl -s -o /dev/null -w "%{http_code}" --max-time 10 "https://pdp-news-prod.fly.dev${ARTICLE_URL}")
+            if [ "$CODE" = "200" ]; then
+              echo "result=pass" >> $GITHUB_OUTPUT
+            else
+              echo "result=fail (status=$CODE)" >> $GITHUB_OUTPUT
+            fi
+          else
+            echo "result=fail (no article link found)" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Test metrics endpoint
+        id: metrics
+        run: |
+          BODY=$(curl -s --max-time 10 https://pdp-news-prod.fly.dev/api/metrics)
+          if echo "$BODY" | grep -q "process_cpu"; then
+            echo "result=pass" >> $GITHUB_OUTPUT
+          else
+            echo "result=fail" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Determine overall status
+        id: status
+        run: |
+          RESULTS="${{ steps.healthcheck.outputs.result }}|${{ steps.homepage.outputs.result }}|${{ steps.db_news.outputs.result }}|${{ steps.article.outputs.result }}|${{ steps.metrics.outputs.result }}"
+          if echo "$RESULTS" | grep -q "fail"; then
+            echo "overall=FAILED" >> $GITHUB_OUTPUT
+            echo "emoji=🔴" >> $GITHUB_OUTPUT
+          else
+            echo "overall=OK" >> $GITHUB_OUTPUT
+            echo "emoji=🟢" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Send Telegram notification
+        if: always()
+        uses: appleboy/telegram-action@master
+        with:
+          to: ${{ secrets.TELEGRAM_CHAT_ID }}
+          token: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          format: markdown
+          message: |
+            ${{ steps.status.outputs.emoji }} *Monitoring — ${{ steps.status.outputs.overall }}*
+
+            Healthcheck: `${{ steps.healthcheck.outputs.result }}`
+            Homepage: `${{ steps.homepage.outputs.result }}`
+            DB News: `${{ steps.db_news.outputs.result }}`
+            Article Page: `${{ steps.article.outputs.result }}`
+            Metrics: `${{ steps.metrics.outputs.result }}`
+
+            _${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}_
