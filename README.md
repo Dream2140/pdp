@@ -27,18 +27,18 @@
 
 ## ✨ Features
 
-| Category | Details |
-|----------|---------|
-| 🌐 **App** | Next.js 16 news site with SSR, Tailwind CSS, dynamic routes |
-| 🗄️ **Database** | PostgreSQL (Neon) + Prisma ORM with migrations & seed |
-| 🧪 **Testing** | Jest unit tests + Playwright E2E + Lighthouse CI audits |
-| 🔄 **CI/CD** | GitHub Actions — lint, test, e2e, Docker build, auto-deploy |
-| 🐳 **Docker** | Multi-stage Dockerfile, docker-compose for local & prod |
-| 🚀 **Deploy** | Fly.io with staging/production environments + auto-rollback |
-| 📊 **Monitoring** | Prometheus metrics, Sentry error tracking, Pino logging |
+| Category             | Details                                                         |
+| -------------------- | --------------------------------------------------------------- |
+| 🌐 **App**           | Next.js 16 news site with SSR, Tailwind CSS, dynamic routes     |
+| 🗄️ **Database**      | PostgreSQL (Neon) + Prisma ORM with migrations & seed           |
+| 🧪 **Testing**       | Jest unit tests + Playwright E2E + Lighthouse CI audits         |
+| 🔄 **CI/CD**         | GitHub Actions — lint, test, e2e, Docker build, auto-deploy     |
+| 🐳 **Docker**        | Multi-stage Dockerfile, docker-compose for local & prod         |
+| 🚀 **Deploy**        | Fly.io with staging/production environments + auto-rollback     |
+| 📊 **Monitoring**    | Prometheus metrics, Sentry error tracking, Pino logging         |
 | 🔔 **Notifications** | Telegram bot for CI/CD status + 15-min production health checks |
-| 🏗️ **IaC** | Terraform configs + docker-compose.prod.yml |
-| 🔒 **Security** | Branch protection, Dependabot auto-updates, PR-only workflow |
+| 🏗️ **IaC**           | Terraform configs + docker-compose.prod.yml                     |
+| 🔒 **Security**      | Branch protection, Dependabot auto-updates, PR-only workflow    |
 
 ---
 
@@ -171,13 +171,13 @@ Both `main` and `develop` are protected — direct push is blocked, CI must pass
 
 ### Workflow Overview
 
-| Workflow | Trigger | What it does |
-|----------|---------|-------------|
-| **CI** | Push / PR | Lint, unit tests, E2E, Docker build + GHCR push |
-| **Deploy** | Push to main/develop | Deploy to Fly.io + healthcheck + Telegram |
-| **Monitoring** | Every 15 min | 5 checks on production → Telegram report |
-| **Lighthouse** | PR | Performance, A11y, SEO audit → PR comment |
-| **Dependabot** | Weekly (Mon) | Auto-update deps, auto-merge patch/minor |
+| Workflow       | Trigger              | What it does                                    |
+| -------------- | -------------------- | ----------------------------------------------- |
+| **CI**         | Push / PR            | Lint, unit tests, E2E, Docker build + GHCR push |
+| **Deploy**     | Push to main/develop | Deploy to Fly.io + healthcheck + Telegram       |
+| **Monitoring** | Every 15 min         | 5 checks on production → Telegram report        |
+| **Lighthouse** | PR                   | Performance, A11y, SEO audit → PR comment       |
+| **Dependabot** | Weekly (Mon)         | Auto-update deps, auto-merge patch/minor        |
 
 ---
 
@@ -188,6 +188,7 @@ Both `main` and `develop` are protected — direct push is blocked, CI must pass
 <td>
 
 ### Frontend
+
 - ⚡ Next.js 16
 - ⚛️ React 18
 - 🎨 Tailwind CSS 3
@@ -197,6 +198,7 @@ Both `main` and `develop` are protected — direct push is blocked, CI must pass
 <td>
 
 ### Backend
+
 - 🗄️ PostgreSQL 16 (Neon)
 - 🔷 Prisma ORM
 - 📊 Prometheus
@@ -206,6 +208,7 @@ Both `main` and `develop` are protected — direct push is blocked, CI must pass
 <td>
 
 ### DevOps
+
 - 🐳 Docker
 - ✈️ Fly.io
 - 🔄 GitHub Actions
@@ -215,6 +218,7 @@ Both `main` and `develop` are protected — direct push is blocked, CI must pass
 <td>
 
 ### Quality
+
 - 🧪 Jest + Playwright
 - 🔍 ESLint 9 + Prettier
 - 🚦 Lighthouse CI
@@ -228,13 +232,13 @@ Both `main` and `develop` are protected — direct push is blocked, CI must pass
 
 ## 📊 Monitoring & Observability
 
-| Tool | Purpose | Endpoint |
-|------|---------|----------|
-| **Prometheus** | Metrics (CPU, memory, HTTP stats) | [`/api/metrics`](https://pdp-news-prod.fly.dev/api/metrics) |
-| **Sentry** | Error tracking & alerting | [`/api/sentry-test`](https://pdp-news-prod.fly.dev/api/sentry-test) |
-| **Pino** | Structured JSON logging | Server logs |
-| **Healthcheck** | Uptime monitoring | [`/api/healthcheck`](https://pdp-news-prod.fly.dev/api/healthcheck) |
-| **Telegram Bot** | CI/CD & monitoring alerts | Every 15 min + on deploy |
+| Tool             | Purpose                           | Endpoint                                                            |
+| ---------------- | --------------------------------- | ------------------------------------------------------------------- |
+| **Prometheus**   | Metrics (CPU, memory, HTTP stats) | [`/api/metrics`](https://pdp-news-prod.fly.dev/api/metrics)         |
+| **Sentry**       | Error tracking & alerting         | [`/api/sentry-test`](https://pdp-news-prod.fly.dev/api/sentry-test) |
+| **Pino**         | Structured JSON logging           | Server logs                                                         |
+| **Healthcheck**  | Uptime monitoring                 | [`/api/healthcheck`](https://pdp-news-prod.fly.dev/api/healthcheck) |
+| **Telegram Bot** | CI/CD & monitoring alerts         | Every 15 min + on deploy                                            |
 
 ---
 
@@ -264,30 +268,30 @@ terraform apply
 
 ## 📜 Available Scripts
 
-| Command | Description |
-|---------|-------------|
-| `npm run dev` | Start development server |
-| `npm run build` | Production build |
-| `npm start` | Start production server |
-| `npm test` | Run Jest unit tests |
-| `npm run test:e2e` | Run Playwright E2E tests |
-| `npm run lint` | ESLint check |
-| `npm run format` | Prettier check |
-| `npm run format:fix` | Prettier auto-fix |
-| `npm run db:migrate` | Apply Prisma migrations |
-| `npm run db:seed` | Seed database with sample data |
+| Command              | Description                    |
+| -------------------- | ------------------------------ |
+| `npm run dev`        | Start development server       |
+| `npm run build`      | Production build               |
+| `npm start`          | Start production server        |
+| `npm test`           | Run Jest unit tests            |
+| `npm run test:e2e`   | Run Playwright E2E tests       |
+| `npm run lint`       | ESLint check                   |
+| `npm run format`     | Prettier check                 |
+| `npm run format:fix` | Prettier auto-fix              |
+| `npm run db:migrate` | Apply Prisma migrations        |
+| `npm run db:seed`    | Seed database with sample data |
 
 ---
 
 ## 🔐 Environment Variables
 
-| Variable | Required | Description |
-|----------|----------|-------------|
-| `DATABASE_URL` | No* | PostgreSQL connection string |
-| `SENTRY_DSN` | No | Sentry error tracking DSN |
-| `FLY_API_TOKEN` | CI only | Fly.io deploy token |
-| `TELEGRAM_BOT_TOKEN` | CI only | Telegram bot token |
-| `TELEGRAM_CHAT_ID` | CI only | Telegram chat ID |
+| Variable             | Required | Description                  |
+| -------------------- | -------- | ---------------------------- |
+| `DATABASE_URL`       | No\*     | PostgreSQL connection string |
+| `SENTRY_DSN`         | No       | Sentry error tracking DSN    |
+| `FLY_API_TOKEN`      | CI only  | Fly.io deploy token          |
+| `TELEGRAM_BOT_TOKEN` | CI only  | Telegram bot token           |
+| `TELEGRAM_CHAT_ID`   | CI only  | Telegram chat ID             |
 
 \* App works without database using fallback data
 
