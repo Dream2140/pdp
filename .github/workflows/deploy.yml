@@ -10,7 +10,7 @@ jobs:
     runs-on: ubuntu-latest
     environment: staging
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - name: Deploy to Fly.io (staging)
         uses: superfly/flyctl-actions/setup-flyctl@master
@@ -24,7 +24,7 @@ jobs:
     runs-on: ubuntu-latest
     environment: production
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - name: Deploy to Fly.io (production)
         uses: superfly/flyctl-actions/setup-flyctl@master
