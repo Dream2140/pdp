@@ -1,8 +1,10 @@
 import Link from "next/link";
 import { getAllNews } from "@/data/news";
 
-export default function HomePage() {
-  const articles = getAllNews();
+export const dynamic = "force-dynamic";
+
+export default async function HomePage() {
+  const articles = await getAllNews();
 
   return (
     <div>
@@ -15,7 +17,8 @@ export default function HomePage() {
             className="block rounded-lg bg-white p-6 shadow transition hover:shadow-md"
           >
             <div className="mb-1 text-sm text-gray-500">
-              {article.date} &middot; {article.author}
+              {article.date.toLocaleDateString("en-US")} &middot;{" "}
+              {article.author}
             </div>
             <h2 className="mb-2 text-xl font-semibold">{article.title}</h2>
             <p className="text-gray-600">{article.summary}</p>
