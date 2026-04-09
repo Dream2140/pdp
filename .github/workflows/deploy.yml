@@ -10,7 +10,7 @@ jobs:
     runs-on: ubuntu-latest
     environment: staging
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - name: Deploy to Fly.io (staging)
         uses: superfly/flyctl-actions/setup-flyctl@master
@@ -19,12 +19,41 @@ jobs:
         env:
           FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
 
+      - name: Verify deployment
+        run: |
+          sleep 10
+          for i in 1 2 3 4 5; do
+            STATUS=$(curl -s -o /dev/null -w "%{http_code}" --max-time 10 https://pdp-news-staging.fly.dev/api/healthcheck)
+            if [ "$STATUS" = "200" ]; then
+              echo "Staging is live!"
+              exit 0
+            fi
+            echo "Attempt $i: status=$STATUS, retrying..."
+            sleep 5
+          done
+          echo "Staging healthcheck failed"
+          exit 1
+
+      - name: Notify Telegram
+        if: always()
+        uses: appleboy/telegram-action@master
+        with:
+          to: ${{ secrets.TELEGRAM_CHAT_ID }}
+          token: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          format: markdown
+          message: |
+            ${{ job.status == 'success' && '🟢' || '🔴' }} *Deploy Staging — ${{ job.status }}*
+
+            💬 `${{ github.event.head_commit.message }}`
+            👤 ${{ github.actor }}
+            🔗 https://pdp-news-staging.fly.dev
+
   deploy-production:
     if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     environment: production
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - name: Deploy to Fly.io (production)
         uses: superfly/flyctl-actions/setup-flyctl@master
@@ -32,6 +61,35 @@ jobs:
       - run: flyctl deploy --config fly.production.toml --remote-only
         env:
           FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
+
+      - name: Verify deployment
+        run: |
+          sleep 10
+          for i in 1 2 3 4 5; do
+            STATUS=$(curl -s -o /dev/null -w "%{http_code}" --max-time 10 https://pdp-news-prod.fly.dev/api/healthcheck)
+            if [ "$STATUS" = "200" ]; then
+              echo "Production is live!"
+              exit 0
+            fi
+            echo "Attempt $i: status=$STATUS, retrying..."
+            sleep 5
+          done
+          echo "Production healthcheck failed"
+          exit 1
+
+      - name: Notify Telegram
+        if: always()
+        uses: appleboy/telegram-action@master
+        with:
+          to: ${{ secrets.TELEGRAM_CHAT_ID }}
+          token: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          format: markdown
+          message: |
+            ${{ job.status == 'success' && '🟢' || '🔴' }} *Deploy Production — ${{ job.status }}*
+
+            💬 `${{ github.event.head_commit.message }}`
+            👤 ${{ github.actor }}
+            🔗 https://pdp-news-prod.fly.dev
 
   rollback:
     if: failure() && github.ref == 'refs/heads/main'
