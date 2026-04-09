@@ -33,8 +33,7 @@ const fallbackArticles: NewsArticle[] = [
   {
     id: "3",
     title: "Breakthrough in Quantum Computing",
-    summary:
-      "Researchers at MIT demonstrated a 1000-qubit quantum processor.",
+    summary: "Researchers at MIT demonstrated a 1000-qubit quantum processor.",
     content:
       "Researchers at MIT have demonstrated a 1000-qubit quantum processor that maintains quantum coherence for over 10 milliseconds — a record-breaking achievement.",
     date: new Date("2026-04-06"),
@@ -42,9 +41,7 @@ const fallbackArticles: NewsArticle[] = [
   },
 ];
 
-export async function getNewsById(
-  id: string,
-): Promise<NewsArticle | null> {
+export async function getNewsById(id: string): Promise<NewsArticle | null> {
   try {
     if (!process.env.DATABASE_URL) throw new Error("No DATABASE_URL");
     return await prisma.article.findUnique({ where: { id } });
