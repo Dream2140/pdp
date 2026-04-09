@@ -1,5 +1,5 @@
 app = "pdp-news-prod"
-primary_region = "waw"
+primary_region = "arn"
 
 [build]
 
