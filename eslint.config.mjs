@@ -17,6 +17,6 @@ export default [
   },
   prettierConfig,
   {
-    ignores: [".next/", "node_modules/", "dist/"],
+    ignores: [".next/", "node_modules/", "dist/", "coverage/"],
   },
 ];

@@ -13,6 +13,7 @@
 **A production-grade news application with a complete CI/CD pipeline**
 
 [![CI](https://github.com/Dream2140/pdp/actions/workflows/ci.yml/badge.svg)](https://github.com/Dream2140/pdp/actions/workflows/ci.yml)
+[![Release](https://github.com/Dream2140/pdp/actions/workflows/release.yml/badge.svg)](https://github.com/Dream2140/pdp/actions/workflows/release.yml)
 [![Deploy](https://github.com/Dream2140/pdp/actions/workflows/deploy.yml/badge.svg)](https://github.com/Dream2140/pdp/actions/workflows/deploy.yml)
 [![Monitoring](https://github.com/Dream2140/pdp/actions/workflows/monitoring.yml/badge.svg)](https://github.com/Dream2140/pdp/actions/workflows/monitoring.yml)
 
