@@ -37,9 +37,7 @@ jobs:
       - name: Parse results
         id: status
         run: |
-          PASSED=$(grep -c "✓\|✔\|passed" /tmp/results.txt || echo "0")
-          FAILED=$(grep -c "✘\|✗\|failed" /tmp/results.txt || echo "0")
-          TOTAL=$((PASSED + FAILED))
+          SUMMARY=$(tail -1 /tmp/results.txt | tr -d '\n' || echo "unknown")
 
           if [ "${{ steps.tests.outcome }}" = "success" ]; then
             echo "emoji=🟢" >> $GITHUB_OUTPUT
@@ -49,7 +47,7 @@ jobs:
             echo "overall=FAILED" >> $GITHUB_OUTPUT
           fi
 
-          echo "summary=${PASSED}/${TOTAL} passed" >> $GITHUB_OUTPUT
+          echo "summary=$SUMMARY" >> $GITHUB_OUTPUT
 
       - name: Send Telegram notification
         if: always()
