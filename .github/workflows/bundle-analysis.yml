@@ -1,0 +1,69 @@
+name: Bundle Analysis
+
+on:
+  pull_request:
+    branches: [main, develop]
+
+permissions:
+  pull-requests: write
+
+jobs:
+  analyze:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 20
+          cache: npm
+
+      - run: npm ci
+
+      - name: Build and analyze
+        run: ANALYZE=true npm run build
+
+      - name: Get bundle stats
+        id: bundle
+        run: |
+          # Parse Next.js build output for bundle sizes
+          NEXT_DIR=".next"
+
+          # Get total JS size
+          TOTAL_JS=$(find $NEXT_DIR/static -name "*.js" -exec wc -c {} + 2>/dev/null | tail -1 | awk '{print $1}')
+          TOTAL_JS_KB=$((TOTAL_JS / 1024))
+
+          # Get page sizes from build manifest
+          PAGES=$(cat $NEXT_DIR/build-manifest.json 2>/dev/null | node -e "
+            const fs = require('fs');
+            const data = JSON.parse(fs.readFileSync('/dev/stdin', 'utf8'));
+            const pages = data.pages || {};
+            Object.entries(pages).forEach(([page, files]) => {
+              console.log(page + ': ' + files.length + ' files');
+            });
+          " 2>/dev/null || echo "unable to parse")
+
+          # Count chunks
+          CHUNKS=$(find $NEXT_DIR/static/chunks -name "*.js" 2>/dev/null | wc -l | tr -d ' ')
+
+          EOF=$(dd if=/dev/urandom bs=15 count=1 status=none | base64)
+          echo "report<<$EOF" >> $GITHUB_OUTPUT
+          echo "## 📦 Bundle Analysis" >> $GITHUB_OUTPUT
+          echo "" >> $GITHUB_OUTPUT
+          echo "| Metric | Value |" >> $GITHUB_OUTPUT
+          echo "|--------|-------|" >> $GITHUB_OUTPUT
+          echo "| Total JS | **${TOTAL_JS_KB} KB** |" >> $GITHUB_OUTPUT
+          echo "| JS Chunks | **${CHUNKS}** |" >> $GITHUB_OUTPUT
+          echo "" >> $GITHUB_OUTPUT
+          echo "### Pages" >> $GITHUB_OUTPUT
+          echo "\`\`\`" >> $GITHUB_OUTPUT
+          echo "$PAGES" >> $GITHUB_OUTPUT
+          echo "\`\`\`" >> $GITHUB_OUTPUT
+          echo "$EOF" >> $GITHUB_OUTPUT
+
+      - name: Post comment
+        uses: marocchino/sticky-pull-request-comment@v2
+        with:
+          header: bundle
+          message: ${{ steps.bundle.outputs.report }}
