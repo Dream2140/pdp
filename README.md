@@ -13,9 +13,10 @@
 **A production-grade news application with a complete CI/CD pipeline**
 
 [![CI](https://github.com/Dream2140/pdp/actions/workflows/ci.yml/badge.svg)](https://github.com/Dream2140/pdp/actions/workflows/ci.yml)
-[![Release](https://github.com/Dream2140/pdp/actions/workflows/release.yml/badge.svg)](https://github.com/Dream2140/pdp/actions/workflows/release.yml)
 [![Deploy](https://github.com/Dream2140/pdp/actions/workflows/deploy.yml/badge.svg)](https://github.com/Dream2140/pdp/actions/workflows/deploy.yml)
 [![Monitoring](https://github.com/Dream2140/pdp/actions/workflows/monitoring.yml/badge.svg)](https://github.com/Dream2140/pdp/actions/workflows/monitoring.yml)
+[![CodeQL](https://github.com/Dream2140/pdp/actions/workflows/codeql.yml/badge.svg)](https://github.com/Dream2140/pdp/actions/workflows/codeql.yml)
+[![Release](https://github.com/Dream2140/pdp/actions/workflows/release.yml/badge.svg)](https://github.com/Dream2140/pdp/actions/workflows/release.yml)
 
 [**Live Demo**](https://pdp-news-prod.fly.dev) ·
 [**Staging**](https://pdp-news-staging.fly.dev) ·
@@ -28,57 +29,64 @@
 
 ## ✨ Features
 
-| Category             | Details                                                         |
-| -------------------- | --------------------------------------------------------------- |
-| 🌐 **App**           | Next.js 16 news site with SSR, Tailwind CSS, dynamic routes     |
-| 🗄️ **Database**      | PostgreSQL (Neon) + Prisma ORM with migrations & seed           |
-| 🧪 **Testing**       | Jest unit tests + Playwright E2E + Lighthouse CI audits         |
-| 🔄 **CI/CD**         | GitHub Actions — lint, test, e2e, Docker build, auto-deploy     |
-| 🐳 **Docker**        | Multi-stage Dockerfile, docker-compose for local & prod         |
-| 🚀 **Deploy**        | Fly.io with staging/production environments + auto-rollback     |
-| 📊 **Monitoring**    | Prometheus metrics, Sentry error tracking, Pino logging         |
-| 🔔 **Notifications** | Telegram bot for CI/CD status + 15-min production health checks |
-| 🏗️ **IaC**           | Terraform configs + docker-compose.prod.yml                     |
-| 🔒 **Security**      | Branch protection, Dependabot auto-updates, PR-only workflow    |
+| Category             | Details                                                          |
+| -------------------- | ---------------------------------------------------------------- |
+| 🌐 **App**           | Next.js 16 news site with SSR, Tailwind CSS, dynamic routes      |
+| 🗄️ **Database**      | PostgreSQL (Neon) + Prisma ORM with migrations & seed            |
+| 🧪 **Testing**       | Jest unit tests + Playwright E2E + Lighthouse CI audits          |
+| 🔄 **CI/CD**         | GitHub Actions — lint, test, e2e, Docker build, auto-deploy      |
+| 🐳 **Docker**        | Multi-stage Dockerfile, docker-compose for local & prod          |
+| 🚀 **Deploy**        | Fly.io with staging/production environments + auto-rollback      |
+| 📊 **Monitoring**    | Prometheus metrics, Sentry error tracking, Pino logging          |
+| 🔔 **Notifications** | Telegram bot for CI/CD status + 15-min production health checks  |
+| 🏗️ **IaC**           | Terraform configs + docker-compose.prod.yml                      |
+| 🔒 **Security**      | CodeQL SAST scanning, branch protection, Dependabot auto-updates |
+| 📦 **Bundle**        | JS bundle size analysis posted as PR comment                     |
+| 🏷️ **Automation**    | PR size labels, Release Please with auto-changelog               |
 
 ---
 
 ## 🏗️ Architecture
 
 ```
-                        ┌─────────────────┐
-                        │   Developer PC  │
-                        └────────┬────────┘
-                                 │ git push
-                                 ▼
-┌────────────────────────────────────────────────────────┐
-│                    GitHub Actions                       │
-│                                                        │
-│  ┌────────┐  ┌────────┐  ┌────────┐  ┌─────────────┐  │
-│  │  Lint  │  │  Test  │  │  E2E   │  │  Lighthouse  │  │
-│  └───┬────┘  └───┬────┘  └───┬────┘  └──────┬──────┘  │
-│      └───────────┼───────────┘               │         │
-│                  ▼                            │         │
-│  ┌─────────────────────────┐                 │         │
-│  │  Docker Build → GHCR   │                 │         │
-│  └────────────┬────────────┘                 │         │
-│               ▼                              │         │
-│  ┌─────────────────────────┐  ┌────────────┐│         │
-│  │  Deploy to Fly.io       │  │  Telegram  ││         │
-│  │  + Healthcheck verify   │→ │  🟢 / 🔴   ││         │
-│  └─────────────────────────┘  └────────────┘│         │
-└────────────────────────────────────────────────────────┘
-                                 │
-              ┌──────────────────┼──────────────────┐
-              ▼                  ▼                   ▼
-     ┌────────────┐    ┌────────────────┐   ┌────────────┐
-     │  Staging   │    │  Production    │   │  Neon DB   │
-     │  Fly.io    │    │  Fly.io        │   │ PostgreSQL │
-     └────────────┘    └────────────────┘   └────────────┘
-                              │
-                    ┌─────────┼─────────┐
-                    ▼         ▼         ▼
-               📊 Metrics  🐛 Sentry  📝 Pino Logs
+                         ┌─────────────────┐
+                         │   Developer PC  │
+                         └────────┬────────┘
+                                  │ git push
+                                  ▼
+┌──────────────────────────────────────────────────────────┐
+│                     GitHub Actions                        │
+│                                                          │
+│  ┌────────┐ ┌──────────┐ ┌───────┐ ┌──────────────────┐ │
+│  │  Lint  │ │Test+Covr.│ │  E2E  │ │ Lighthouse/Bundle│ │
+│  └───┬────┘ └────┬─────┘ └──┬────┘ └────────┬─────────┘ │
+│      └───────────┼──────────┘                │           │
+│                  ▼                            │           │
+│  ┌──────────────────────┐  ┌───────────────┐ │           │
+│  │ Docker Build → GHCR  │  │ CodeQL / SAST │ │           │
+│  └──────────┬───────────┘  └───────────────┘ │           │
+│             ▼                                │           │
+│  ┌──────────────────────┐  ┌──────────────┐  │           │
+│  │  Deploy to Fly.io    │  │   Telegram   │  │           │
+│  │  + Healthcheck verify│→ │   🟢 / 🔴    │  │           │
+│  └──────────────────────┘  └──────────────┘  │           │
+│                                              │           │
+│  ┌──────────────────────┐  ┌──────────────┐  │           │
+│  │ Monitoring (15 min)  │  │ PR Labels    │  │           │
+│  │ Playwright on prod   │  │ XS/S/M/L/XL │  │           │
+│  └──────────────────────┘  └──────────────┘  │           │
+└──────────────────────────────────────────────────────────┘
+                                  │
+               ┌──────────────────┼──────────────────┐
+               ▼                  ▼                   ▼
+      ┌────────────┐    ┌────────────────┐   ┌────────────┐
+      │  Staging   │    │  Production    │   │  Neon DB   │
+      │  Fly.io    │    │  Fly.io        │   │ PostgreSQL │
+      └────────────┘    └────────────────┘   └────────────┘
+                               │
+                     ┌─────────┼─────────┐
+                     ▼         ▼         ▼
+                📊 Metrics  🐛 Sentry  📝 Pino Logs
 ```
 
 ---
@@ -146,11 +154,15 @@ npm run format    # Prettier check
 ├── terraform/                  # Fly.io IaC
 ├── .github/
 │   ├── workflows/
-│   │   ├── ci.yml              # Lint → Test → E2E → Docker
-│   │   ├── deploy.yml          # Fly.io staging/prod + rollback
-│   │   ├── monitoring.yml      # 15-min production health checks
-│   │   ├── lighthouse.yml      # Performance/A11y/SEO audit
-│   │   ├── notify.yml          # Telegram notifications
+│   │   ├── ci.yml              # Lint → Test (coverage) → E2E → Docker
+│   │   ├── deploy.yml          # Fly.io staging/prod + rollback + Telegram
+│   │   ├── monitoring.yml      # Playwright E2E on prod every 15 min
+│   │   ├── lighthouse.yml      # Performance/A11y/SEO audit on PR
+│   │   ├── codeql.yml          # Security scanning (SAST)
+│   │   ├── bundle-analysis.yml # JS bundle size report on PR
+│   │   ├── pr-size.yml         # Auto XS/S/M/L/XL labels
+│   │   ├── release.yml         # Release Please (auto changelog)
+│   │   ├── notify.yml          # Telegram CI notifications
 │   │   └── dependabot-automerge.yml
 │   └── dependabot.yml          # Weekly dependency updates
 ├── Dockerfile                  # Multi-stage production build
@@ -172,13 +184,17 @@ Both `main` and `develop` are protected — direct push is blocked, CI must pass
 
 ### Workflow Overview
 
-| Workflow       | Trigger              | What it does                                    |
-| -------------- | -------------------- | ----------------------------------------------- |
-| **CI**         | Push / PR            | Lint, unit tests, E2E, Docker build + GHCR push |
-| **Deploy**     | Push to main/develop | Deploy to Fly.io + healthcheck + Telegram       |
-| **Monitoring** | Every 15 min         | 5 checks on production → Telegram report        |
-| **Lighthouse** | PR                   | Performance, A11y, SEO audit → PR comment       |
-| **Dependabot** | Weekly (Mon)         | Auto-update deps, auto-merge patch/minor        |
+| Workflow            | Trigger              | What it does                                         |
+| ------------------- | -------------------- | ---------------------------------------------------- |
+| **CI**              | Push / PR            | Lint, test + coverage, E2E, Docker build + GHCR push |
+| **Deploy**          | Push to main/develop | Deploy Fly.io + healthcheck verify + Telegram        |
+| **Monitoring**      | Every 15 min         | Playwright E2E on production → Telegram report       |
+| **Lighthouse**      | PR                   | Performance, A11y, SEO audit → PR comment            |
+| **CodeQL**          | Push / PR / Weekly   | Security scanning (XSS, injection, etc.)             |
+| **Bundle Analysis** | PR                   | JS bundle size report → PR comment                   |
+| **PR Size**         | PR                   | Auto-label XS / S / M / L / XL                       |
+| **Release Please**  | Push to main         | Auto-create release PR with changelog                |
+| **Dependabot**      | Weekly (Mon)         | Auto-update deps, auto-merge patch/minor             |
 
 ---
 
@@ -218,12 +234,14 @@ Both `main` and `develop` are protected — direct push is blocked, CI must pass
 </td>
 <td>
 
-### Quality
+### Quality & Security
 
 - 🧪 Jest + Playwright
 - 🔍 ESLint 9 + Prettier
 - 🚦 Lighthouse CI
 - 🐛 Sentry
+- 🛡️ CodeQL SAST
+- 📦 Bundle Analyzer
 
 </td>
 </tr>
