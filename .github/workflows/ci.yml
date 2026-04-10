@@ -36,7 +36,7 @@ jobs:
           node-version: 20
           cache: npm
       - run: npm ci
-      - run: npm test -- --coverage --coverageReporters=json-summary --coverageReporters=text
+      - run: npm test -- --coverage --coverageReporters=json-summary --coverageReporters=json --coverageReporters=text
 
       - name: Coverage comment
         if: github.event_name == 'pull_request'
