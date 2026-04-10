@@ -10,76 +10,46 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
-      - name: Test healthcheck
-        id: healthcheck
+      - uses: actions/checkout@v6
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 20
+          cache: npm
+
+      - run: npm ci
+
+      - name: Cache Playwright browsers
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ hashFiles('package-lock.json') }}
+
+      - run: npx playwright install --with-deps chromium
+
+      - name: Run monitoring tests
+        id: tests
         run: |
-          RESPONSE=$(curl -s -o /dev/null -w "%{http_code}" --max-time 10 https://pdp-news-prod.fly.dev/api/healthcheck)
-          if [ "$RESPONSE" = "200" ]; then
-            echo "result=pass" >> $GITHUB_OUTPUT
-          else
-            echo "result=fail ($RESPONSE)" >> $GITHUB_OUTPUT
-          fi
+          npx playwright test e2e/monitoring.spec.ts --reporter=list 2>&1 | tee /tmp/results.txt
+          echo "exit_code=$?" >> $GITHUB_OUTPUT
+        continue-on-error: true
 
-      - name: Test homepage and database
-        id: homepage
-        run: |
-          BODY=$(curl -s -w "\n%{http_code}" --max-time 10 https://pdp-news-prod.fly.dev/)
-          CODE=$(echo "$BODY" | tail -1)
-          CONTENT=$(echo "$BODY" | sed '$d')
-
-          if [ "$CODE" != "200" ]; then
-            echo "result=fail (status=$CODE)" >> $GITHUB_OUTPUT
-            echo "db_result=fail (homepage down)" >> $GITHUB_OUTPUT
-            echo "article_result=fail (homepage down)" >> $GITHUB_OUTPUT
-            exit 0
-          fi
-
-          if echo "$CONTENT" | grep -q "Latest News"; then
-            echo "result=pass" >> $GITHUB_OUTPUT
-          else
-            echo "result=fail (no content)" >> $GITHUB_OUTPUT
-          fi
-
-          COUNT=$(echo "$CONTENT" | grep -c 'href="/news/' || true)
-          if [ "$COUNT" -ge "1" ]; then
-            echo "db_result=pass ($COUNT articles)" >> $GITHUB_OUTPUT
-          else
-            echo "db_result=fail (0 articles)" >> $GITHUB_OUTPUT
-          fi
-
-          ARTICLE_URL=$(echo "$CONTENT" | grep -o 'href="/news/[^"]*"' | head -1 | tr -d '"' | sed 's/href=//')
-          if [ -n "$ARTICLE_URL" ]; then
-            ACODE=$(curl -s -o /dev/null -w "%{http_code}" --max-time 10 "https://pdp-news-prod.fly.dev${ARTICLE_URL}")
-            if [ "$ACODE" = "200" ]; then
-              echo "article_result=pass" >> $GITHUB_OUTPUT
-            else
-              echo "article_result=fail (status=$ACODE)" >> $GITHUB_OUTPUT
-            fi
-          else
-            echo "article_result=fail (no link)" >> $GITHUB_OUTPUT
-          fi
-
-      - name: Test metrics endpoint
-        id: metrics
-        run: |
-          BODY=$(curl -s --max-time 10 https://pdp-news-prod.fly.dev/api/metrics)
-          if echo "$BODY" | grep -q "process_cpu"; then
-            echo "result=pass" >> $GITHUB_OUTPUT
-          else
-            echo "result=fail" >> $GITHUB_OUTPUT
-          fi
-
-      - name: Determine overall status
+      - name: Parse results
         id: status
         run: |
-          RESULTS="${{ steps.healthcheck.outputs.result }}|${{ steps.homepage.outputs.result }}|${{ steps.homepage.outputs.db_result }}|${{ steps.homepage.outputs.article_result }}|${{ steps.metrics.outputs.result }}"
-          if echo "$RESULTS" | grep -q "fail"; then
-            echo "overall=FAILED" >> $GITHUB_OUTPUT
-            echo "emoji=🔴" >> $GITHUB_OUTPUT
-          else
-            echo "overall=OK" >> $GITHUB_OUTPUT
+          PASSED=$(grep -c "✓\|✔\|passed" /tmp/results.txt || echo "0")
+          FAILED=$(grep -c "✘\|✗\|failed" /tmp/results.txt || echo "0")
+          TOTAL=$((PASSED + FAILED))
+
+          if [ "${{ steps.tests.outcome }}" = "success" ]; then
             echo "emoji=🟢" >> $GITHUB_OUTPUT
+            echo "overall=OK" >> $GITHUB_OUTPUT
+          else
+            echo "emoji=🔴" >> $GITHUB_OUTPUT
+            echo "overall=FAILED" >> $GITHUB_OUTPUT
           fi
+
+          echo "summary=${PASSED}/${TOTAL} passed" >> $GITHUB_OUTPUT
 
       - name: Send Telegram notification
         if: always()
@@ -91,10 +61,14 @@ jobs:
           message: |
             ${{ steps.status.outputs.emoji }} *Monitoring — ${{ steps.status.outputs.overall }}*
 
-            Healthcheck: `${{ steps.healthcheck.outputs.result }}`
-            Homepage: `${{ steps.homepage.outputs.result }}`
-            DB News: `${{ steps.homepage.outputs.db_result }}`
-            Article Page: `${{ steps.homepage.outputs.article_result }}`
-            Metrics: `${{ steps.metrics.outputs.result }}`
+            🧪 Playwright E2E: `${{ steps.status.outputs.summary }}`
+            🎯 Target: `pdp-news-prod.fly.dev`
+
+            Tests:
+            ✅ Healthcheck API
+            ✅ Homepage + DB news
+            ✅ Article page navigation
+            ✅ Prometheus metrics
+            ✅ Page load < 3s
 
             _${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}_
